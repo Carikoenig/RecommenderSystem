@@ -36,3 +36,20 @@ Week 1
     add database models for the links.csv and tags.csv files
     extend the read_data.py code to populate the database
     extend the views also to show links to movie databases and tags
+
+ 
+
+Week 2/3
+
+    create a database model for ratings
+    extend the read_data.py code to populate the database with data from ratings.csv as well
+        reading 100.000 ratings takes a while; create a much smaller version of the file for testing
+        create user objects/db entries for the users found in the ratings file
+    decide on a recommender approach (see lecture) and:
+        create function(s) that query the database to build the necessary data for comparing (e.g., user ratings vector for a movie or movie ratings vector for a movie)
+        create comparison function(s) for sorting the movies according to you recommender approach
+        test the functions for plausibility
+    create an interface, routes, and view code for letting users rate movies
+    create a view for displaying recommendations for a user
+
+Zeitraum: 24.11.2023, 12:00 – 12.01.2024, 12:00 
