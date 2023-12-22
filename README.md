@@ -2,7 +2,7 @@
 -> second project for "AI and the Web" uni course, recommends movies from MovieLens dataset to user
 
                                    
- Project 2: Build a movie recommender system
+## Project 2: Build a movie recommender system
 
 Build a personalized recommender system with these components:
 
