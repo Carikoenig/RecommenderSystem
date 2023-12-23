@@ -5,7 +5,10 @@
 
     {% for m in movies %}
         <div class="panel panel-default">
-            <div class="panel-heading"><b>{{ m.title }}</b></div>
+            <div class="panel-heading">
+
+                <b>{{m.title}}</b>
+            </div>
             <div class="panel-body">
                 <p>
                     {% for g in m.genres %}
@@ -13,12 +16,38 @@
                     {% endfor %}
                 </p>
             </div>
+
+            <div class="panel-body">
+                <p style="font-weight: bold;">More info</p>
+                {% set my_link = links | selectattr('movie_id', '==', m.id) | first %}
+                    {% if my_link %}
+                        <p>
+                        MovieLens: <a href="https://movielens.org/movies/{{my_link.movie_id}}">https://movielens.org/movies/{{my_link.movie_id}}</a> 
+                        </p>
+                        <p>
+                            IMDb:<a href="https://www.imdb.com/title/tt0{{my_link.imdbld}}/">https://www.imdb.com/title/tt0{{my_link.imdbld}}/</a> 
+                        </p>
+                        <p>
+                            TMBD: <a href="https://www.themoviedb.org/movie/{{my_link.tmdbld}}">https://www.themoviedb.org/movie/{{my_link.tmdbld}}</a>
+                        </p>
+                    {% endif %}
+            </div>
+            
+            <div class="panel-body">
+                <p> User tags:
+                    {% for t in tags %}
+                        {% if m.id == t.movie_id %}
+                            <span class="label label-info">#{{ t.tag }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </p>
+            </div>
               <div class="panel-footer movie-rating">Rate:
-                  <a href="#" class="card-link" data-movieid="1">1</a>
-                  <a href="#" class="card-link" data-movieid="1">2</a>
-                  <a href="#" class="card-link" data-movieid="1">3</a>
-                  <a href="#" class="card-link" data-movieid="1">4</a>
-                  <a href="#" class="card-link" data-movieid="1">5</a> Stars
+                  <a href="#" class="card-link" data-movieid="m.id">1</a>
+                  <a href="#" class="card-link" data-movieid="m.id">2</a>
+                  <a href="#" class="card-link" data-movieid="m.id">3</a>
+                  <a href="#" class="card-link" data-movieid="m.id">4</a>
+                  <a href="#" class="card-link" data-movieid="m.id">5</a> Stars
               </div>
         </div>
     {% endfor %}
