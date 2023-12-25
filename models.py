@@ -20,6 +20,9 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(100, collation='NOCASE'), nullable=False, server_default='')
     last_name = db.Column(db.String(100, collation='NOCASE'), nullable=False, server_default='')
 
+    # ratings of movies
+    ratings = db.relationship('MovieRating', backref='user', lazy=True)
+
 
 class Movie(db.Model):
     __tablename__ = 'movies'
@@ -48,3 +51,11 @@ class MovieLink(db.Model):
     movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False, primary_key=True)
     imdbld = db.Column(db.Integer, nullable=False)
     tmdbld = db.Column(db.Integer, nullable=False)
+
+class MovieRating(db.Model):
+    __tablename__ = 'movie_rating'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.BigInteger, nullable=False)

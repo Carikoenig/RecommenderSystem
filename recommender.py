@@ -3,7 +3,7 @@
 from flask import Flask, render_template, request
 from flask_user import login_required, UserManager, current_user
 
-from models import db, User, Movie, MovieGenre, MovieLink, MovieTag
+from models import db, User, Movie, MovieGenre, MovieLink, MovieTag, MovieRating
 from read_data import check_and_read_data
 
 # Class-based application configuration
@@ -57,8 +57,10 @@ def movies_page():
     movies = Movie.query.limit(20).all()
 
     tags = MovieTag.query.filter(MovieTag.movie_id.in_((1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20))).all()
+    print('tags', tags)
 
     links = MovieLink.query.filter(MovieLink.movie_id.in_((1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20))).all()
+    print('links', links)
 
     # only Romance movies
     # movies = Movie.query.filter(Movie.genres.any(MovieGenre.genre == 'Romance')).limit(10).all()
