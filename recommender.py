@@ -5,6 +5,9 @@ from flask_user import login_required, UserManager, current_user
 
 from models import db, User, Movie, MovieGenre, MovieLink, MovieTag, MovieRating
 from read_data import check_and_read_data
+from recommend_functions import recommendUserUser, recommendItemItem, recommendMostPopular
+
+import click
 
 # Class-based application configuration
 class ConfigClass(object):
@@ -32,12 +35,34 @@ db.create_all()  # create database if necessary
 user_manager = UserManager(app, db, User)  # initialize Flask-User management
 
 
+
 @app.cli.command('initdb')
 def initdb_command():
     global db
     """Creates the database tables."""
     check_and_read_data(db)
     print('Initialized the database.')
+
+@app.cli.command('recommendUserUser')
+@click.argument('user_id', type=int)
+def recommendUserUser_command(user_id):
+    """Creates the database tables."""
+    recommendUserUser(user_id)
+    print('Ran recommendUserUser')
+
+@app.cli.command('recommendItemItem')
+@click.argument('movie_id', type=int)
+def recommendItemItem_command(movie_id):
+    """Creates the database tables."""
+    recommendItemItem(movie_id)
+    print('Ran recommendItemItem')
+
+@app.cli.command('recommendMostPopular')
+@click.argument('user_id', type=int)
+def recommendMostPopular_command(user_id):
+    """Creates the database tables."""
+    recommendMostPopular(user_id)
+    print('Ran recommendMostPopular')
 
 
 # The Home page is accessible to anyone
