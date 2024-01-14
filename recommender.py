@@ -207,17 +207,36 @@ def recPopular_page():
     return render_template("movies.html", movies=movies_rec, tags=tags_rec, links=links_rec)
 
 
-
+@app.route('/rate', methods=['GET'])
+@login_required  # User must be authenticated
+def rate_page():
+    return render_template("rate.html")
 
 @app.route('/rate', methods=['POST'])
 @login_required  # User must be authenticated
 def rate():
-    movieid = request.form.get('movieid')
-    rating = request.form.get('rating')
-    # userid = current_user.get_id()
-    userid = current_user.id
-    print("Rate {} for {} by {}".format(rating, movieid, userid))
-    return render_template("rated.html", rating=rating)
+    try:
+        movie_id = int(request.form.get('movieid'))
+        rating = int(request.form.get('rating'))
+
+        if 1 <= rating <= 5:
+            user_id = current_user.id
+            existing_rating = MovieRating.query.filter_by(user_id=user_id, movie_id=movie_id).first()
+
+            if existing_rating:
+                existing_rating.rating = rating
+            else:
+                new_rating = MovieRating(user_id=user_id, movie_id=movie_id, rating=rating)
+                db.session.add(new_rating)
+
+            db.session.commit()
+
+            return redirect(url_for('home_page'))
+        else:
+            return render_template("error.html", error="Invalid rating. Please choose a rating between 1 and 5.")
+
+    except Exception as e:
+        return render_template("error.html", error=str(e))
 
 
 # Start development web server

@@ -37,6 +37,8 @@
             {% if call_or_get(current_user.is_authenticated) %}
                 <a href="{{ url_for('user.edit_user_profile') }}">{{ current_user.username or current_user.email }}</a>
                 &nbsp; | &nbsp;
+                <a href="{{ url_for('rate_page') }}">Rate a Movie</a>
+                &nbsp; | &nbsp;
                 <a href="{{ url_for('user.logout') }}">{%trans%}Sign out{%endtrans%}</a>
             {% else %}
                 <a href="{{ url_for('user.login') }}">{%trans%}Sign in{%endtrans%}</a>
