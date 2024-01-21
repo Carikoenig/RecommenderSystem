@@ -1,6 +1,6 @@
 # Contains parts from: https://flask-user.readthedocs.io/en/latest/quickstart_app.html
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 from flask_user import login_required, UserManager, current_user
 from models import db, User, Movie, MovieGenre, MovieLink, MovieTag, MovieRating
 from read_data import check_and_read_data
@@ -89,7 +89,7 @@ def recommendReWatch_command(user_id):
     # movies = Movie.query.all()
     # data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
     recommendReWatch(user_id, data_movies)
-    print('Ran recommendMostPopular')
+    print('Ran recommendReWatch')
 
 
 # The Home page is accessible to anyone
@@ -128,7 +128,8 @@ def movies_page():
 @login_required  # User must be authenticated
 def reWatch_page():
 
-    userid = current_user.get_id()
+    userid = current_user.id
+    print('current user', userid)
     #testing, as long as no rating of new users happening yet
     # userid = 12
 
@@ -150,7 +151,8 @@ def reWatch_page():
 @login_required  # User must be authenticated
 def recUserUser_page():
 
-    userid = current_user.get_id()
+    userid = current_user.id
+    print('current user id', userid)
     #testing, as long as no rating of new users happening yet
     # userid = 12
 
@@ -172,7 +174,8 @@ def recUserUser_page():
 @login_required  # User must be authenticated
 def recItemItem_page():
 
-    userid = current_user.get_id()
+    userid = current_user.id
+    print('current_user', userid)
     # testing, as long as no rating of new users happening yet
     # userid = 12
 
@@ -237,7 +240,8 @@ def rate():
 
             db.session.commit()
 
-            return render_template('home.html')
+            # return render_template('home.html') 
+            return redirect('/', code=302)
         else:
             return render_template("error.html", error="Invalid rating. Please choose a rating between 1 and 5.")
 

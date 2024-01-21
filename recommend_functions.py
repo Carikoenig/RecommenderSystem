@@ -5,7 +5,7 @@ from lenskit.algorithms.user_knn import UserUser
 from lenskit.algorithms.item_knn import ItemItem
 from lenskit.algorithms.ranking import TopN
 
-amount_recs = 10
+amount_recs = 20
 
 def recommendUserUser(user_id, data_ratings, data_movies, algo_user):
     
