@@ -10,6 +10,7 @@ from lenskit.algorithms.user_knn import UserUser
 from lenskit.algorithms.item_knn import ItemItem
 import click
 import pandas as pd 
+import time
 
 # Class-based application configuration
 class ConfigClass(object):
@@ -221,17 +222,22 @@ def rate():
 
         if 1 <= rating <= 5:
             user_id = current_user.id
+            #print('user_id', user_id)
             existing_rating = MovieRating.query.filter_by(user_id=user_id, movie_id=movie_id).first()
+            current_time = time.time()
+            #print('current time', current_time)
 
             if existing_rating:
+                #print('existing rating', existing_rating)
                 existing_rating.rating = rating
+                existing_rating.timestamp = current_time
             else:
-                new_rating = MovieRating(user_id=user_id, movie_id=movie_id, rating=rating)
+                new_rating = MovieRating(user_id=user_id, movie_id=movie_id, rating=rating, timestamp=current_time)
                 db.session.add(new_rating)
 
             db.session.commit()
 
-            return redirect(url_for('home_page'))
+            return render_template('home.html')
         else:
             return render_template("error.html", error="Invalid rating. Please choose a rating between 1 and 5.")
 
