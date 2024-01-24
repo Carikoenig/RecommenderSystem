@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect
 from flask_user import login_required, UserManager, current_user
 from models import db, User, Movie, MovieGenre, MovieLink, MovieTag, MovieRating
 from read_data import check_and_read_data
-from recommend_functions import recommendUserUser, recommendItemItem, recommendMostPopular, recommendReWatch
+from recommend_functions import recommendUserUser, recommendItemItem, recommendMostPopular, recommendReWatch, recommendRandomMovies, amount_recs
 from lenskit.algorithms import Recommender
 from lenskit.algorithms.user_knn import UserUser
 from lenskit.algorithms.item_knn import ItemItem
@@ -134,7 +134,14 @@ def reWatch_page():
     # userid = 12
 
     # recommend
-    movies_rec, movies_rec_id = recommendReWatch(userid)
+    # For new Users with few to no interactions
+    if not userid or MovieRating.query.filter_by(user_id=userid).count() < 5:
+
+        movies_rec, movies_rec_id = recommendRandomMovies(amount_recs)
+    else:
+        # For Users with enough interactions
+        movies_rec, movies_rec_id = recommendReWatch(userid)
+        
     print('movies_rec', movies_rec)
     for movie in movies_rec:
         print(movie.title)

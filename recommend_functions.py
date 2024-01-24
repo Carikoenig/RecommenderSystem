@@ -1,5 +1,6 @@
 import pandas as pd 
-from models import MovieRating, Movie
+import random
+from models import MovieRating, Movie, db
 from lenskit.algorithms import Recommender
 from lenskit.algorithms.user_knn import UserUser
 from lenskit.algorithms.item_knn import ItemItem
@@ -110,7 +111,12 @@ def recommendMostPopular(data_ratings, data_movies):
     return rec_movies, rec_movies_ids
 
 
+def recommendRandomMovies(amount_recs):
 
+    random_movies = Movie.query.order_by(db.func.random()).limit(amount_recs).all()
+    random_movie_ids = [movie.id for movie in random_movies]
+    
+    return random_movies, random_movie_ids
 
 
 
