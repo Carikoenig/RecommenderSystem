@@ -1,6 +1,16 @@
 # RecommenderSystem
 -> second project for "AI and the Web" uni course, recommends movies from MovieLens dataset to user
 
+Acces to finished project: NEED TO BE CONNECTED TO UNIVERSITYS VPN!! 
+    
+    http://vm954.rz.uni-osnabrueck.de/user097/recommender.wsgi/
+    
+OR: 
+
+    download this repository on local pc
+    create a venv and install the requirements with "pip install -r requirements.txt"
+    run the flask app with "flask --app recommender.py run"
+
                                    
 ## Project 2: Build a movie recommender system
 
