@@ -1,6 +1,6 @@
 # Contains parts from: https://flask-user.readthedocs.io/en/latest/quickstart_app.html
 
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, abort, url_for
 from flask_user import login_required, UserManager, current_user
 from models import db, User, Movie, MovieGenre, MovieLink, MovieTag, MovieRating
 from read_data import check_and_read_data
@@ -11,6 +11,7 @@ from lenskit.algorithms.item_knn import ItemItem
 import click
 import pandas as pd 
 import time
+import traceback
 
 # Class-based application configuration
 class ConfigClass(object):
@@ -29,6 +30,11 @@ class ConfigClass(object):
     USER_ENABLE_USERNAME = True  # Enable username authentication
     USER_REQUIRE_RETYPE_PASSWORD = True  # Simplify register form
 
+    USER_AFTER_REGISTER_ENDPOINT = 'home_page'
+    USER_AFTER_CONFIRM_ENDPOINT = 'home_page'
+    USER_AFTER_LOGIN_ENDPOINT = 'home_page'
+    USER_AFTER_LOGOUT_ENDPOINT = 'home_page'
+
 # Create Flask app
 app = Flask(__name__)
 app.config.from_object(__name__ + '.ConfigClass')  # configuration
@@ -37,28 +43,28 @@ db.init_app(app)  # initialize database
 db.create_all()  # create database if necessary
 user_manager = UserManager(app, db, User)  # initialize Flask-User management
 
-print('Preparations running...')
-# convert data for lenskit usage
-ratings = MovieRating.query.all()
-data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+# print('Preparations running...')
+# # convert data for lenskit usage
+# ratings = MovieRating.query.all()
+# data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
 movies = Movie.query.all()
 data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
 
-# Collaborative Fitlering Item-Item similarity
-item_item = ItemItem(15, min_nbrs=3, feedback='explicit')
-algo_item = Recommender.adapt(item_item)
-algo_item.fit(data_ratings)
-# Create a mapping between abstract and original item IDs
-original_to_abstract_mapping_item = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_item.item_index_)}
-print('setup lenskit Item-Item algorithm')
+# # Collaborative Fitlering Item-Item similarity
+# item_item = ItemItem(15, min_nbrs=3, feedback='explicit')
+# algo_item = Recommender.adapt(item_item)
+# algo_item.fit(data_ratings)
+# # Create a mapping between abstract and original item IDs
+# # original_to_abstract_mapping_item = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_item.item_index_)}
+# print('setup lenskit Item-Item algorithm')
 
-# Collaborative Fitlering User-User similarity
-user_user = UserUser(15, min_nbrs=3, feedback='explicit') # define min and max of users as neighbours
-algo_user = Recommender.adapt(user_user)
-algo_user.fit(data_ratings)
-# Create a mapping between abstract and original item IDs
-original_to_abstract_mapping_user = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_user.item_index_)}
-print('setup lenskit User-User algorithm')
+# # Collaborative Fitlering User-User similarity
+# user_user = UserUser(15, min_nbrs=3, feedback='explicit') # define min and max of users as neighbours
+# algo_user = Recommender.adapt(user_user)
+# algo_user.fit(data_ratings)
+# # Create a mapping between abstract and original item IDs
+# # original_to_abstract_mapping_user = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_user.item_index_)}
+# print('setup lenskit User-User algorithm')
 
 
 
@@ -69,31 +75,31 @@ def initdb_command():
     check_and_read_data(db)
     print('Initialized the database.')
 
-@app.cli.command('recommendUserUser')
-@click.argument('user_id', type=int)
-def recommendUserUser_command(user_id):
-    recommendUserUser(user_id)
-    print('Ran recommendUserUser')
+# @app.cli.command('recommendUserUser')
+# @click.argument('user_id', type=int)
+# def recommendUserUser_command(user_id):
+#     recommendUserUser(user_id)
+#     print('Ran recommendUserUser')
 
-@app.cli.command('recommendItemItem')
-@click.argument('movie_id', type=int)
-def recommendItemItem_command(movie_id):
-    recommendItemItem(movie_id)
-    print('Ran recommendItemItem')
+# @app.cli.command('recommendItemItem')
+# @click.argument('movie_id', type=int)
+# def recommendItemItem_command(movie_id):
+#     recommendItemItem(movie_id)
+#     print('Ran recommendItemItem')
 
-@app.cli.command('recommendMostPopular')
-@click.argument('user_id', type=int)
-def recommendMostPopular_command(user_id):
-    recommendMostPopular(user_id)
-    print('Ran recommendMostPopular')
+# @app.cli.command('recommendMostPopular')
+# @click.argument('user_id', type=int)
+# def recommendMostPopular_command(user_id):
+#     recommendMostPopular(user_id)
+#     print('Ran recommendMostPopular')
 
-@app.cli.command('recommendReWatch')
-@click.argument('user_id', type=int)
-def recommendReWatch_command(user_id):
-    # movies = Movie.query.all()
-    # data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
-    recommendReWatch(user_id, data_movies)
-    print('Ran recommendReWatch')
+# @app.cli.command('recommendReWatch')
+# @click.argument('user_id', type=int)
+# def recommendReWatch_command(user_id):
+#     # movies = Movie.query.all()
+#     # data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
+#     recommendReWatch(user_id, data_movies)
+#     print('Ran recommendReWatch')
 
 
 # The Home page is accessible to anyone
@@ -105,7 +111,6 @@ def home_page():
 
 # The Members page is only accessible to authenticated users via the @login_required decorator
 @app.route('/movies')
-@login_required  # User must be authenticated
 def movies_page():
 
     # first 20 movies
@@ -133,7 +138,7 @@ def movies_page():
 def reWatch_page():
 
     userid = current_user.id
-    #print('current user', userid)
+    print('current user', userid)
     #testing, as long as no rating of new users happening yet
     # userid = 12
 
@@ -163,12 +168,16 @@ def reWatch_page():
 def recUserUser_page():
 
     userid = current_user.id
-    #print('current user id', userid)
+    print('current user id', userid)
     #testing, as long as no rating of new users happening yet
     # userid = 12
 
+    ratings = MovieRating.query.all()
+    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+
     # recommend
-    movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies, algo_user, original_to_abstract_mapping_user)
+    movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies)
+    # movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies, algo_user, original_to_abstract_mapping_user)
     print('movies_rec', movies_rec)
     for movie in movies_rec:
         print(movie.title, movie.id)
@@ -186,12 +195,16 @@ def recUserUser_page():
 def recItemItem_page():
 
     userid = current_user.id
-    #print('current_user', userid)
+    print('current_user', userid)
     # testing, as long as no rating of new users happening yet
     # userid = 12
 
+    ratings = MovieRating.query.all()
+    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+
     # recommend
-    movies_rec, movies_rec_id = recommendItemItem(userid, data_ratings, data_movies, algo_item, original_to_abstract_mapping_item)
+    # movies_rec, movies_rec_id = recommendItemItem(userid, data_ratings, data_movies, algo_item, original_to_abstract_mapping_item)
+    movies_rec, movies_rec_id = recommendItemItem(userid, data_ratings, data_movies)
     print('movies_rec', movies_rec)
     for movie in movies_rec:
         print(movie.title, movie.id)
@@ -207,6 +220,8 @@ def recItemItem_page():
 @app.route('/popular')
 def recPopular_page():
 
+    ratings = MovieRating.query.all()
+    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
     # recommend
     movies_rec, movies_rec_id = recommendMostPopular(data_ratings, data_movies)
     # print('movies_rec', movies_rec)
@@ -252,12 +267,25 @@ def rate():
             db.session.commit()
 
             # return render_template('home.html') 
-            return redirect('/', code=302)
+           
+            # return redirect('/', code=302)
+            return redirect(url_for('home_page'), code=302)
         else:
             return render_template("error.html", error="Invalid rating. Please choose a rating between 1 and 5.")
 
     except Exception as e:
         return render_template("error.html", error=str(e))
+
+
+@app.errorhandler(500)
+def internal_error(exception):
+   return "<pre>"+traceback.format_exc()+"</pre>"
+
+
+@app.route("/something")
+def yourcode():
+
+    abort(400)  # wrong or illegal request → issue a 400 error
 
 
 # Start development web server

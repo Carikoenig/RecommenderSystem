@@ -8,7 +8,24 @@ from lenskit.algorithms.ranking import TopN
 
 amount_recs = 20
 
-def recommendUserUser(user_id, data_ratings, data_movies, algo_user, original_to_abstract_mapping):
+# def recommendUserUser(user_id, data_ratings, data_movies, algo_user, original_to_abstract_mapping):
+# def recommendUserUser(user_id, data_ratings, data_movies, algo_user):
+def recommendUserUser(user_id, data_ratings, data_movies):
+
+    print('Preparations running...')
+    # convert data for lenskit usage
+    ratings = MovieRating.query.all()
+    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+    # movies = Movie.query.all()
+    # data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
+
+    # Collaborative Fitlering User-User similarity
+    user_user = UserUser(15, min_nbrs=3, feedback='explicit') # define min and max of users as neighbours
+    algo_user = Recommender.adapt(user_user)
+    algo_user.fit(data_ratings)
+    # Create a mapping between abstract and original item IDs
+    # original_to_abstract_mapping_user = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_user.item_index_)}
+    print('setup lenskit User-User algorithm')
     
     # get the ratings data
     # ratings = MovieRating.query.all()
@@ -34,17 +51,33 @@ def recommendUserUser(user_id, data_ratings, data_movies, algo_user, original_to
     #TODO: find out why predicted scores fall outside the range of 0-5??
     print('joined_data_UserUserAlgo', joined_data)
 
-    # rec_movies_ids = set(top_recommendations['item'])
-    # print('rec_movies_ids', rec_movies_ids)
-    # rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
+    rec_movies_ids = set(top_recommendations['item'])
+    print('rec_movies_ids', rec_movies_ids)
+    rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
-    rec_movies_ids = [original_to_abstract_mapping.get(abstract_id) for abstract_id in top_recommendations['item']]
-    rec_movies = Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
+    # rec_movies_ids = [original_to_abstract_mapping.get(abstract_id) for abstract_id in top_recommendations['item']]
+    # rec_movies = Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
     return rec_movies, rec_movies_ids
 
+# def recommendItemItem(item_id, data_ratings, data_movies, algo_item, original_to_abstract_mapping):
+# def recommendItemItem(item_id, data_ratings, data_movies, algo_item):
+def recommendItemItem(item_id, data_ratings, data_movies):
 
-def recommendItemItem(item_id, data_ratings, data_movies, algo_item, original_to_abstract_mapping):
+    print('Preparations running...')
+    # convert data for lenskit usage
+    ratings = MovieRating.query.all()
+    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+    # movies = Movie.query.all()
+    # data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
+
+    # Collaborative Fitlering Item-Item similarity
+    item_item = ItemItem(15, min_nbrs=3, feedback='explicit')
+    algo_item = Recommender.adapt(item_item)
+    algo_item.fit(data_ratings)
+    # Create a mapping between abstract and original item IDs
+    # original_to_abstract_mapping_item = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_item.item_index_)}
+    print('setup lenskit Item-Item algorithm')
 
     # get the ratings data
     # ratings = MovieRating.query.all()
@@ -60,17 +93,18 @@ def recommendItemItem(item_id, data_ratings, data_movies, algo_item, original_to
     #print(data.head(10))
 
     top_recommendations = algo_item.recommend(item_id, amount_recs)
+    print('top_recommendations', top_recommendations)
 
     joined_data = top_recommendations.join(data_movies['genres'], on='item')
     joined_data = joined_data.join(data_movies['title'], on='item')
     print('joined_data_ItemItemAlgo', joined_data)
 
-    # rec_movies_ids = set(top_recommendations['item'])
-    # print('rec_movies_ids', rec_movies_ids)
-    # rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
+    rec_movies_ids = set(top_recommendations['item'])
+    print('rec_movies_ids', rec_movies_ids)
+    rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
-    rec_movies_ids = [original_to_abstract_mapping.get(abstract_id) for abstract_id in top_recommendations['item']]
-    rec_movies = Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
+    # rec_movies_ids = [original_to_abstract_mapping.get(abstract_id) for abstract_id in top_recommendations['item']]
+    # rec_movies = Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
     return rec_movies, rec_movies_ids
 
@@ -78,9 +112,9 @@ def recommendItemItem(item_id, data_ratings, data_movies, algo_item, original_to
 def recommendReWatch(userid):
     # function returning movies that user has already seen
     rated_movies = MovieRating.query.filter_by(user_id=userid).all()
-    print('rated_movies', rated_movies)
+    #print('rated_movies', rated_movies)
     rated_movie_ids = set(rating.movie_id for rating in rated_movies)
-    print('rated_movie_ids', rated_movie_ids)
+    #print('rated_movie_ids', rated_movie_ids)
     rec_rewatch = Movie.query.filter(Movie.id.in_(rated_movie_ids)).all()
     
     return rec_rewatch, rated_movie_ids
