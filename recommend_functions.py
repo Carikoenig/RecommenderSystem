@@ -8,7 +8,7 @@ from lenskit.algorithms.ranking import TopN
 
 amount_recs = 20
 
-def recommendUserUser(user_id, data_ratings, data_movies, algo_user):
+def recommendUserUser(user_id, data_ratings, data_movies, algo_user, original_to_abstract_mapping):
     
     # get the ratings data
     # ratings = MovieRating.query.all()
@@ -27,21 +27,24 @@ def recommendUserUser(user_id, data_ratings, data_movies, algo_user):
 
      
     top_recommendations = algo_user.recommend(user_id, amount_recs)
+    print('top_recommendations', top_recommendations)
 
     joined_data = top_recommendations.join(data_movies['genres'], on='item')
     joined_data = joined_data.join(data_movies['title'], on='item')
     #TODO: find out why predicted scores fall outside the range of 0-5??
-    print('joined data UserUser', joined_data)
+    print('joined_data_UserUserAlgo', joined_data)
 
-    rec_movies_ids = set(top_recommendations['item'])
-    print('rec_movies_ids', rec_movies_ids)
+    # rec_movies_ids = set(top_recommendations['item'])
+    # print('rec_movies_ids', rec_movies_ids)
+    # rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
-    rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
+    rec_movies_ids = [original_to_abstract_mapping.get(abstract_id) for abstract_id in top_recommendations['item']]
+    rec_movies = Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
     return rec_movies, rec_movies_ids
 
 
-def recommendItemItem(item_id, data_ratings, data_movies, algo_item):
+def recommendItemItem(item_id, data_ratings, data_movies, algo_item, original_to_abstract_mapping):
 
     # get the ratings data
     # ratings = MovieRating.query.all()
@@ -60,12 +63,14 @@ def recommendItemItem(item_id, data_ratings, data_movies, algo_item):
 
     joined_data = top_recommendations.join(data_movies['genres'], on='item')
     joined_data = joined_data.join(data_movies['title'], on='item')
-    print('joined data ItemItem', joined_data)
+    print('joined_data_ItemItemAlgo', joined_data)
 
-    rec_movies_ids = set(top_recommendations['item'])
-    print('rec_movies_ids', rec_movies_ids)
+    # rec_movies_ids = set(top_recommendations['item'])
+    # print('rec_movies_ids', rec_movies_ids)
+    # rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
-    rec_movies =  Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
+    rec_movies_ids = [original_to_abstract_mapping.get(abstract_id) for abstract_id in top_recommendations['item']]
+    rec_movies = Movie.query.filter(Movie.id.in_(rec_movies_ids)).all()
 
     return rec_movies, rec_movies_ids
 

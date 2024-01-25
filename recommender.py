@@ -48,12 +48,16 @@ data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in m
 item_item = ItemItem(15, min_nbrs=3, feedback='explicit')
 algo_item = Recommender.adapt(item_item)
 algo_item.fit(data_ratings)
+# Create a mapping between abstract and original item IDs
+original_to_abstract_mapping_item = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_item.item_index_)}
 print('setup lenskit Item-Item algorithm')
 
 # Collaborative Fitlering User-User similarity
 user_user = UserUser(15, min_nbrs=3, feedback='explicit') # define min and max of users as neighbours
 algo_user = Recommender.adapt(user_user)
 algo_user.fit(data_ratings)
+# Create a mapping between abstract and original item IDs
+original_to_abstract_mapping_user = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_user.item_index_)}
 print('setup lenskit User-User algorithm')
 
 
@@ -129,7 +133,7 @@ def movies_page():
 def reWatch_page():
 
     userid = current_user.id
-    print('current user', userid)
+    #print('current user', userid)
     #testing, as long as no rating of new users happening yet
     # userid = 12
 
@@ -144,7 +148,7 @@ def reWatch_page():
         
     print('movies_rec', movies_rec)
     for movie in movies_rec:
-        print(movie.title)
+        print(movie.title, movie.id)
 
     tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
     print('tags_rec', tags_rec)
@@ -159,15 +163,15 @@ def reWatch_page():
 def recUserUser_page():
 
     userid = current_user.id
-    print('current user id', userid)
+    #print('current user id', userid)
     #testing, as long as no rating of new users happening yet
     # userid = 12
 
     # recommend
-    movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies, algo_user)
-    # print('movies_rec', movies_rec)
-    # for movie in movies_rec:
-    #     print(movie.title)
+    movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies, algo_user, original_to_abstract_mapping_user)
+    print('movies_rec', movies_rec)
+    for movie in movies_rec:
+        print(movie.title, movie.id)
 
     tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
     # print('tags_rec', tags_rec)
@@ -182,15 +186,15 @@ def recUserUser_page():
 def recItemItem_page():
 
     userid = current_user.id
-    print('current_user', userid)
+    #print('current_user', userid)
     # testing, as long as no rating of new users happening yet
     # userid = 12
 
     # recommend
-    movies_rec, movies_rec_id = recommendItemItem(userid, data_ratings, data_movies, algo_item)
-    # print('movies_rec', movies_rec)
-    # for movie in movies_rec:
-    #     print(movie.title)
+    movies_rec, movies_rec_id = recommendItemItem(userid, data_ratings, data_movies, algo_item, original_to_abstract_mapping_item)
+    print('movies_rec', movies_rec)
+    for movie in movies_rec:
+        print(movie.title, movie.id)
 
     tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
     # print('tags_rec', tags_rec)
