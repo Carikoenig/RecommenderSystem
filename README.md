@@ -9,7 +9,7 @@ OR:
 
     download this repository on local pc
     create a venv and install the requirements with "pip install -r requirements.txt"
-    run the flask app with "flask --app myapp2.py run"
+    run the flask app with "flask --app recommender.py run"
 
                                    
 ## Project 2: Build a movie recommender system
