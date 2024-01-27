@@ -1,7 +1,9 @@
 {% extends "flask_user_layout.html" %}
 {% block content %}
 <div class="container">
-    <h2>Movies</h2>
+    {% block subheader %}
+        {% block movie_subheader %}{% endblock %}
+    {% endblock %}
 
     {% for m in movies %}
         <div class="panel panel-default">
