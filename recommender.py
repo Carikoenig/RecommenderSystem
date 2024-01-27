@@ -43,28 +43,9 @@ db.init_app(app)  # initialize database
 db.create_all()  # create database if necessary
 user_manager = UserManager(app, db, User)  # initialize Flask-User management
 
-# print('Preparations running...')
-# # convert data for lenskit usage
-# ratings = MovieRating.query.all()
-# data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+
 movies = Movie.query.all()
 data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
-
-# # Collaborative Fitlering Item-Item similarity
-# item_item = ItemItem(15, min_nbrs=3, feedback='explicit')
-# algo_item = Recommender.adapt(item_item)
-# algo_item.fit(data_ratings)
-# # Create a mapping between abstract and original item IDs
-# # original_to_abstract_mapping_item = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_item.item_index_)}
-# print('setup lenskit Item-Item algorithm')
-
-# # Collaborative Fitlering User-User similarity
-# user_user = UserUser(15, min_nbrs=3, feedback='explicit') # define min and max of users as neighbours
-# algo_user = Recommender.adapt(user_user)
-# algo_user.fit(data_ratings)
-# # Create a mapping between abstract and original item IDs
-# # original_to_abstract_mapping_user = {original_id: abstract_id for abstract_id, original_id in enumerate(algo_user.item_index_)}
-# print('setup lenskit User-User algorithm')
 
 
 
@@ -109,7 +90,6 @@ def initdb_command():
 #     # data_movies = pd.DataFrame([(movie.id, movie.title, movie.genres) for movie in movies], columns=['item', 'title' , 'genres'])
 #     ratings = MovieRating.query.all()
 #     # data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
-
 #     recommendCosine(user_id, ratings)
 #     print('Ran recommendCosine')
 
@@ -125,13 +105,6 @@ def home_page():
 @app.route('/movies')
 def movies_page():
 
-    # first 20 movies
-    # movies = Movie.query.limit(20).all()
-    # tags = MovieTag.query.filter(MovieTag.movie_id.in_((1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20))).all()
-    # print('tags', tags)
-    # links = MovieLink.query.filter(MovieLink.movie_id.in_((1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20))).all()
-    # print('links', links)
-
     # random movies
     movies = Movie.query.order_by(db.func.random()).limit(10).all()
     movie_ids = [movie.id for movie in movies]
@@ -145,54 +118,17 @@ def movies_page():
 
     return render_template("random.html", movies=movies, tags=tags, links=links)
 
-@app.route('/rewatch')
-@login_required  # User must be authenticated
-def reWatch_page():
 
-    userid = current_user.id
-    print('current user', userid)
-    #testing, as long as no rating of new users happening yet
-    # userid = 12
-
-    # recommend
-    # For new Users with few to no interactions
-    if not userid or MovieRating.query.filter_by(user_id=userid).count() < 5:
-
-        movies_rec, movies_rec_id = recommendRandomMovies(amount_recs)
-    else:
-        # For Users with enough interactions
-        movies_rec, movies_rec_id = recommendReWatch(userid)
-        
-    print('movies_rec', movies_rec)
-    for movie in movies_rec:
-        print(movie.title, movie.id)
-
-    tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
-    print('tags_rec', tags_rec)
-
-    links_rec = MovieLink.query.filter(MovieLink.movie_id.in_(movies_rec_id)).all()
-    print('links_rec', links_rec)
-
-    return render_template("rewatch.html", movies=movies_rec, tags=tags_rec, links=links_rec)
-
-@app.route('/recUserUser')
-@login_required  # User must be authenticated
-def recUserUser_page():
-
-    userid = current_user.id
-    print('current user id', userid)
-    #testing, as long as no rating of new users happening yet
-    # userid = 12
+@app.route('/popular')
+def recPopular_page():
 
     ratings = MovieRating.query.all()
     data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
-
     # recommend
-    movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies)
-    # movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies, algo_user, original_to_abstract_mapping_user)
-    print('movies_rec', movies_rec)
-    for movie in movies_rec:
-        print(movie.title, movie.id)
+    movies_rec, movies_rec_id = recommendMostPopular(data_ratings, data_movies)
+    # print('movies_rec', movies_rec)
+    # for movie in movies_rec:
+    #     print(movie.title)
 
     tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
     # print('tags_rec', tags_rec)
@@ -200,7 +136,8 @@ def recUserUser_page():
     links_rec = MovieLink.query.filter(MovieLink.movie_id.in_(movies_rec_id)).all()
     # print('links_rec', links_rec)
 
-    return render_template("recommended.html", movies=movies_rec, tags=tags_rec, links=links_rec)
+    return render_template("popular.html", movies=movies_rec, tags=tags_rec, links=links_rec)
+    
 
 @app.route('/recCosine')
 @login_required  # User must be authenticated
@@ -223,6 +160,32 @@ def recCosine_page():
     # print('links_rec', links_rec)
 
     return render_template("recommended.html", movies=rec_cosine, tags=tags_rec, links=links_rec)
+
+
+@app.route('/recUserUser')
+@login_required  # User must be authenticated
+def recUserUser_page():
+
+    userid = current_user.id
+    print('current user id', userid)
+
+    ratings = MovieRating.query.all()
+    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
+
+    # recommend
+    movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies)
+    # movies_rec, movies_rec_id = recommendUserUser(userid, data_ratings, data_movies, algo_user, original_to_abstract_mapping_user)
+    print('movies_rec', movies_rec)
+    for movie in movies_rec:
+        print(movie.title, movie.id)
+
+    tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
+    # print('tags_rec', tags_rec)
+
+    links_rec = MovieLink.query.filter(MovieLink.movie_id.in_(movies_rec_id)).all()
+    # print('links_rec', links_rec)
+
+    return render_template("recommended.html", movies=movies_rec, tags=tags_rec, links=links_rec)
 
 
 @app.route('/recItemItem')
@@ -251,25 +214,6 @@ def recItemItem_page():
     # print('links_rec', links_rec)
 
     return render_template("recommended.html", movies=movies_rec, tags=tags_rec, links=links_rec)
-
-@app.route('/popular')
-def recPopular_page():
-
-    ratings = MovieRating.query.all()
-    data_ratings = pd.DataFrame([(rating.user_id, rating.movie_id, rating.rating) for rating in ratings], columns=['user', 'item', 'rating'])
-    # recommend
-    movies_rec, movies_rec_id = recommendMostPopular(data_ratings, data_movies)
-    # print('movies_rec', movies_rec)
-    # for movie in movies_rec:
-    #     print(movie.title)
-
-    tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
-    # print('tags_rec', tags_rec)
-
-    links_rec = MovieLink.query.filter(MovieLink.movie_id.in_(movies_rec_id)).all()
-    # print('links_rec', links_rec)
-
-    return render_template("popular.html", movies=movies_rec, tags=tags_rec, links=links_rec)
 
 
 @app.route('/rate', methods=['GET'])
@@ -310,6 +254,34 @@ def rate():
 
     except Exception as e:
         return render_template("error.html", error=str(e))
+
+@app.route('/rewatch')
+@login_required  # User must be authenticated
+def reWatch_page():
+
+    userid = current_user.id
+    print('current user', userid)
+
+    # recommend
+    # For new Users with few to no interactions
+    if not userid or MovieRating.query.filter_by(user_id=userid).count() < 5:
+
+        movies_rec, movies_rec_id = recommendRandomMovies(amount_recs)
+    else:
+        # For Users with enough interactions
+        movies_rec, movies_rec_id = recommendReWatch(userid)
+        
+    print('movies_rec', movies_rec)
+    for movie in movies_rec:
+        print(movie.title, movie.id)
+
+    tags_rec = MovieTag.query.filter(MovieTag.movie_id.in_(movies_rec_id)).all()
+    print('tags_rec', tags_rec)
+
+    links_rec = MovieLink.query.filter(MovieLink.movie_id.in_(movies_rec_id)).all()
+    print('links_rec', links_rec)
+
+    return render_template("rewatch.html", movies=movies_rec, tags=tags_rec, links=links_rec)
 
 
 @app.errorhandler(500)
